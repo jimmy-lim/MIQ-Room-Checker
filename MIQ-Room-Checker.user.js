@@ -10,8 +10,15 @@
 (function() {
     'use strict';
 
+    // use this when simple .click() not working !!!
+    function triggerMouseEvent (node, eventType) {
+        var clickEvent = document.createEvent ('MouseEvents');
+        clickEvent.initEvent (eventType, true, true);
+        node.dispatchEvent (clickEvent);
+    };
+
     // Your code here...
-    let interval = 30; // in seconds
+    let interval = 60; // in seconds
 
     let mindate = localStorage.getItem("mindate");
     if(mindate == null || mindate.split("-").length != 3)
@@ -25,14 +32,38 @@
         maxdate = prompt("Max Date / To Date. Format: YYYY-MM-DD");
         localStorage.setItem("maxdate",maxdate);
     }
-    let dateArr = [];
-    let dates = document.querySelector("#accommodation-calendar");
-    if(dates != null) dateArr = dates.attributes["data-arrival-dates"].value.split("_")
     console.log(`${Date(Date.now())}`);
     console.log(`Looking for vacancy from ${mindate} to ${maxdate} both inclusive`);
-    if(dateArr.length > 0 && dateArr[0] >= mindate && dateArr[dateArr.length-1] <= maxdate) alert("FAST!!! BOOK NOW!!!")
-    else {
-        console.log(`Not Found, refresh after ${interval} seconds.`);
-        setTimeout(function(){ window.location.reload();}, interval * 1000);
-    }
+    //document.querySelector(".flatpickr-calendar").scrollIntoView();
+
+    setTimeout(function(){
+        document.querySelector("#form_rooms_0_accessibilityRequirement_1").click();
+        while (document.querySelector(".flatpickr-day:not(.flatpickr-disabled):not(.today)") == null)
+        {
+            triggerMouseEvent(document.querySelector("span.flatpickr-next-month"),"mousedown");
+            console.log(`Next Month`);
+        }
+        triggerMouseEvent(document.querySelector(".flatpickr-day:not(.flatpickr-disabled):not(.today)"),"mousedown");
+    }, 1000);
+
+    setTimeout(function(){
+        let dateArr = [];
+        let dates = document.querySelector("#accommodation-calendar");
+        let dSelected = new Date(document.querySelector(".selected").attributes["aria-label"].value);
+        let tzo = dSelected.getTimezoneOffset()*60*1000;
+        dSelected = new Date(dSelected.getTime() - tzo);
+        dSelected = dSelected.toISOString().substring(0,10);
+        console.log(`Nearest non-today available date = ${dSelected}`);
+        if(dates != null) dateArr = dates.attributes["data-arrival-dates"].value.split("_")
+        if(dateArr.length > 0 && dateArr[0] >= mindate && dateArr[dateArr.length-1] <= maxdate)
+        {
+            //alert("FAST!!! BOOK NOW!!!")
+            console.log(`MATCHED`);
+            if(dSelected >= mindate && dSelected <= maxdate) document.querySelector("#form_next").click();
+        }
+        else {
+            console.log(`Not Found, refresh after ${interval} seconds.`);
+            setTimeout(function(){ window.location.reload();}, interval * 1000);
+        }
+    }, 2000);
 })();
